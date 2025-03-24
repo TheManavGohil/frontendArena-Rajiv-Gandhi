@@ -1,129 +1,164 @@
-import React, { Suspense, useState, useRef } from 'react';
+import React, { Suspense, useState, useRef, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, useGLTF } from '@react-three/drei';
 import styled from 'styled-components';
 import * as THREE from 'three';
+import gsap from 'gsap';
 
-// Dialogue box for the info, positioned near the marker
-const InfoBox = ({ info, position }) => (
-  <InfoBoxContainer style={{ left: `${position[0]}px`, top: `${position[1]}px` }}>
-    <div className="box-content">
-      <h3>{info.title}</h3>
-      <p>{info.description}</p>
-    </div>
-  </InfoBoxContainer>
-);
+// Navigation Points Configuration
+const NAVIGATION_POINTS = [
+  {
+    id: 'entrance',
+    name: 'Museum Entrance',
+    position: [0, 2, 10],
+    lookAt: [0, 0, 0],
+    description: 'Welcome to the virtual museum entrance'
+  },
+  {
+    id: 'modernArt',
+    name: 'Modern Art Section',
+    position: [10, 4, 2],
+    lookAt: [10, 4, 0],
+    description: 'Contemporary art installations and exhibitions'
+  },
+  {
+    id: 'classicalArt',
+    name: 'Classical Art Wing',
+    position: [-2, 4, 2],
+    lookAt: [-2, 4, 0],
+    description: 'Historical artworks from past centuries'
+  }
+];
 
-// Styled components for the info box
-const InfoBoxContainer = styled.div`
+// Styled Navigation Containers
+const NavigationContainer = styled.div`
   position: absolute;
-  background-color: rgba(0, 0, 0, 0.75);
-  color: white;
-  padding: 15px;
-  border-radius: 8px;
-  max-width: 300px;
-  z-index: 10;
-  pointer-events: none; /* Make sure it doesn't block any 3D interactions */
-  
-  .box-content {
-    background-color: #333;
-    padding: 10px;
-    border-radius: 5px;
-    text-align: center;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  z-index: 20;
+`;
+
+const ArrowButton = styled.button`
+  background-color: rgba(255, 255, 255, 0.7);
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: rgba(200, 200, 200, 0.8);
+    transform: scale(1.1);
   }
-  
-  h3 {
-    font-size: 1.1rem;
-    margin: 0;
-  }
-  
-  p {
-    font-size: 0.9rem;
+
+  svg {
+    width: 30px;
+    height: 30px;
+    fill: #333;
   }
 `;
 
 const ExhibitWalkthrough = () => {
-  const { scene } = useGLTF('/models/scene.gltf'); // Load the 3D model
-  const cameraRef = useRef();
-  const [info, setInfo] = useState(null); // State to hold information for the overlay
-  const [screenPosition, setScreenPosition] = useState([0, 0]); // Store the screen position for the info box
+  const { scene } = useGLTF('/models/scene.gltf');
+  const [currentPointIndex, setCurrentPointIndex] = useState(0);
+  const controlsRef = useRef(null);
 
-  // Info for the markers
-  const infoData = {
-    "marker1": {
-      title: "Part 1",
-      description: "This is the description for painting 1."
-    },
-    "marker2": {
-      title: "Part 2",
-      description: "This is the description for painting 2."
-    }
-  };
+  // Navigation Method with GSAP Animation
+  const navigateTo = (point) => {
+    if (!controlsRef.current) return;
 
-  const initialPosition = [0, 2, 10]; // Initial camera position
-  const initialLookAt = [0, 0, 0];  // Camera focus point
+    const controls = controlsRef.current;
+    const camera = controls.object;
 
-  // Handle marker click events
-  const handleClick = (marker, position) => {
-    setInfo({
-      ...infoData[marker],
-      position: position,
+    // Animate camera position and look at point
+    gsap.to(camera.position, {
+      x: point.position[0],
+      y: point.position[1],
+      z: point.position[2],
+      duration: 1.5,
+      ease: 'power2.inOut',
+      onUpdate: () => {
+        controls.target.set(
+          point.lookAt[0],
+          point.lookAt[1],
+          point.lookAt[2]
+        );
+        controls.update();
+      }
     });
   };
 
-  // Convert 3D world coordinates to 2D screen coordinates
-  const toScreenPosition = (position, camera, size) => {
-    const vector = new THREE.Vector3(position[0], position[1], position[2]);
-    vector.project(camera); // Project to 2D space
-
-    const x = (vector.x * 0.5 + 0.5) * size.width; // Convert to screen coordinates (x)
-    const y = (-(vector.y * 0.5 + 0.5)) * size.height; // Convert to screen coordinates (y)
-
-    return [x, y];
+  // Navigate to Previous Point
+  const navigatePrevious = () => {
+    const prevIndex = (currentPointIndex - 1 + NAVIGATION_POINTS.length) % NAVIGATION_POINTS.length;
+    setCurrentPointIndex(prevIndex);
+    navigateTo(NAVIGATION_POINTS[prevIndex]);
   };
 
-  // Function to create a marker for click interaction
-  const createMarker = (position, markerName) => (
-    <mesh position={position} onClick={() => handleClick(markerName, position)}>
-      <sphereGeometry args={[0.3, 32, 32]} />
-      <meshStandardMaterial color="blue" emissive="cyan" emissiveIntensity={0.5} />
-    </mesh>
-  );
+  // Navigate to Next Point
+  const navigateNext = () => {
+    const nextIndex = (currentPointIndex + 1) % NAVIGATION_POINTS.length;
+    setCurrentPointIndex(nextIndex);
+    navigateTo(NAVIGATION_POINTS[nextIndex]);
+  };
 
   return (
-    <div className="exhibit-container">
-      <h2>Explore the Art Exhibit</h2>
+    <div className="exhibit-container" style={{ position: 'relative', width: '100%', height: '100vh' }}>
+      {/* Arrow Navigation */}
+      <NavigationContainer>
+        <ArrowButton onClick={navigatePrevious}>
+          <svg viewBox="0 0 24 24">
+            <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/>
+          </svg>
+        </ArrowButton>
+        <ArrowButton onClick={navigateNext}>
+          <svg viewBox="0 0 24 24">
+            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+          </svg>
+        </ArrowButton>
+      </NavigationContainer>
 
-      {/* Canvas for the 3D Scene */}
-      <Canvas camera={{ position: initialPosition, fov: 60 }} ref={cameraRef}>
+      <Canvas 
+        style={{ width: '100%', height: '100%' }}
+        camera={{ position: [0, 2, 10], fov: 60 }}
+      >
         <Suspense fallback={<div>Loading...</div>}>
           <primitive object={scene} scale={1.8} />
           <ambientLight intensity={1.25} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-          {/* Add clickable markers to the model */}
-          {createMarker([10, 4, 2], 'marker1')}  {/* Example marker1 at position (1,1,0) */}
-          {createMarker([-2, 4, 2], 'marker2')} {/* Example marker2 at position (-1,0,2) */}
+          <pointLight position={[10, 10, 10]} intensity={1} />
         </Suspense>
         
-        {/* OrbitControls to allow navigation */}
         <OrbitControls 
-          maxDistance={20}   // Set a larger max zoom distance
-          minDistance={5}    // Set a reasonable minimum zoom distance
-          enableZoom={true}  // Enable zoom
-          enablePan={true}   // Enable panning
-          target={initialLookAt} // Set the target the camera should look at
+          ref={controlsRef}
+          maxDistance={20}
+          minDistance={5}
+          enableZoom={true}
+          enablePan={true}
         />
       </Canvas>
 
-      {/* Render the info box on top of the Canvas, using screen coordinates */}
-      {info && (
-        <InfoBox
-          info={info}
-          position={screenPosition} // Position based on screen coordinates
-        />
-      )}
+      {/* Current Location Indicator */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: 'rgba(255,255,255,0.7)',
+        padding: '10px',
+        borderRadius: '5px'
+      }}>
+        {NAVIGATION_POINTS[currentPointIndex].name}
+      </div>
     </div>
   );
 };
 
 export default ExhibitWalkthrough;
+
