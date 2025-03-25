@@ -7,17 +7,20 @@ function App() {
     {
       name: "David Chen",
       specialty: "Digital Mixed Media",
-      description: "Merging traditional techniques with digital innovation, Chen creates multi-layered works that blur the line between physical and virtual."
+      description: "Merging traditional techniques with digital innovation, Chen creates multi-layered works that blur the line between physical and virtual.",
+      image:"i2.jpg"
     },
     {
       name: "Maya Williams", 
       specialty: "Neo-Impressionism",
-      description: "Williams revisits impressionist techniques through a contemporary lens, creating vibrant landscapes that explore themes of climate change."
+      description: "Williams revisits impressionist techniques through a contemporary lens, creating vibrant landscapes that explore themes of climate change.",
+      image: "i3.jpeg"
     },
     {
       name: "Hiroshi Tanaka",
       specialty: "Sculptural Installation", 
-      description: "Tanaka's immersive installations transform spaces through light, sound, and interactive elements, inviting audiences to become part of the art."
+      description: "Tanaka's immersive installations transform spaces through light, sound, and interactive elements, inviting audiences to become part of the art.",
+      image: 'i4.png'
     }
   ];
 
@@ -36,7 +39,11 @@ function App() {
         <div className="mb-12">
           <div className="grid md:grid-cols-2 gap-8 bg-gray-100 p-8 rounded-lg">
             <div className="bg-gray-300 h-[500px] rounded-lg flex items-center justify-center text-gray-500">
-              Featured Artist Portrait
+              <img 
+                src="i1.jpg" 
+                alt="Clara Renoir Portrait" 
+                className="w-full h-full object-cover rounded-lg"
+              />
             </div>
             <div>
               <div className="flex items-center mb-4">
@@ -58,10 +65,18 @@ function App() {
               </p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-300 h-[200px] rounded-lg flex items-center justify-center text-gray-500">
-                  Artwork 1
+                  <img 
+                    src="artwork1.jpg" 
+                    alt="Clara Renoir Artwork 1" 
+                    className="w-full h-full object-cover rounded-lg"
+                  />
                 </div>
                 <div className="bg-gray-300 h-[200px] rounded-lg flex items-center justify-center text-gray-500">
-                  Artwork 2
+                  <img 
+                    src="artwork2.jpg" 
+                    alt="Clara Renoir Artwork 2" 
+                    className="w-full h-full object-cover rounded-lg"
+                  />
                 </div>
               </div>
               <div className="mt-4 text-right">
@@ -75,10 +90,14 @@ function App() {
 
         {/* Other Featured Artists */}
         <div className="grid md:grid-cols-3 gap-6">
-          {featuredArtists.map((artist, index) => (
+          {featuredArtists.map((artist, index, image) => (
             <div key={index} className="bg-gray-100 p-6 rounded-lg">
               <div className="bg-gray-300 h-[300px] rounded-lg mb-4 flex items-center justify-center text-gray-500">
-                Artist Portrait {index + 1}
+                <img 
+                  src={artist.image}
+                  alt={`${artist.name} Portrait`} 
+                  className="w-full h-full object-cover rounded-lg"
+                />
               </div>
               <h3 className="text-xl font-bold mb-2">{artist.name}</h3>
               <p className="text-gray-600 mb-2">{artist.specialty}</p>
