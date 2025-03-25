@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useSpeechSynthesis } from "react-speech-kit";
-import stories from "./StoryData";
+import { useSpeechSynthesis } from 'react-speech-kit';
+import stories from './gizaPyramidsStories';
 
-const AtlantisStoryTeller = () => {
+function GizaPyramidsStoryTeller() {
   const { speak, cancel } = useSpeechSynthesis();
-  const [currentStory, setCurrentStory] = useState(0);
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const handleSpeak = (text) => {
@@ -16,15 +16,27 @@ const AtlantisStoryTeller = () => {
   const handleNextStory = () => {
     cancel();
     setIsSpeaking(false);
-    setCurrentStory((prev) => (prev + 1) % stories.length);
+    setCurrentStoryIndex((prevIndex) => 
+      (prevIndex + 1) % stories.length
+    );
   };
 
+  const handlePrevStory = () => {
+    cancel();
+    setIsSpeaking(false);
+    setCurrentStoryIndex((prevIndex) => 
+      prevIndex === 0 ? stories.length - 1 : prevIndex - 1
+    );
+  };
+
+  const currentStory = stories[currentStoryIndex];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-800 text-white 
-      flex flex-col justify-center items-center p-8">
+    <div className="min-h-screen bg-gradient-to-br from-amber-900 via-orange-900 to-amber-800 
+      text-white flex flex-col justify-center items-center p-8">
       <Link 
         to="/" 
-        className="absolute top-6 left-6 text-white hover:text-blue-200 
+        className="absolute top-6 left-6 text-white hover:text-amber-200 
           transition-colors flex items-center gap-2"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -37,26 +49,39 @@ const AtlantisStoryTeller = () => {
         shadow-2xl overflow-hidden grid grid-cols-2 gap-8 p-12">
         <div className="relative">
           <img 
-            src={stories[currentStory].image} 
-            alt={stories[currentStory].title} 
+            src={currentStory.image} 
+            alt={currentStory.title} 
             className="w-full h-[500px] object-cover rounded-xl 
               transform transition-transform duration-300 hover:scale-105"
           />
           <div className="absolute bottom-4 left-4 right-4 bg-black/50 rounded-b-xl p-4 text-center">
             <h2 className="text-2xl font-semibold text-white">
-              {stories[currentStory].title}
+              {currentStory.title}
             </h2>
           </div>
         </div>
 
         <div className="flex flex-col justify-between">
           <p className="text-lg leading-relaxed mb-6 text-gray-100">
-            {stories[currentStory].text}
+            {currentStory.text}
           </p>
           
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center items-center">
             <button
-              onClick={() => handleSpeak(stories[currentStory].text)}
+              onClick={handlePrevStory}
+              className="px-6 py-3 bg-gray-700 hover:bg-gray-800 
+                rounded-full text-white transition-all duration-300 
+                transform hover:-translate-y-1 hover:shadow-lg
+                flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Previous
+            </button>
+
+            <button
+              onClick={() => handleSpeak(currentStory.text)}
               className="px-6 py-3 bg-green-500 hover:bg-green-600 
                 rounded-full text-white transition-all duration-300 
                 transform hover:-translate-y-1 hover:shadow-lg
@@ -75,17 +100,20 @@ const AtlantisStoryTeller = () => {
                 transform hover:-translate-y-1 hover:shadow-lg
                 flex items-center gap-2"
             >
-              Next Story
+              Next
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                <path fillRule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             </button>
+
+            <span className="text-xl font-semibold">
+              {`${currentStoryIndex + 1} / ${stories.length}`}
+            </span>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
-export default AtlantisStoryTeller;
+export default GizaPyramidsStoryTeller;
